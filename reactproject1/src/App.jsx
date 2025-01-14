@@ -1,49 +1,65 @@
 // src/App.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
-// Size of the square
 const SQUARE_SIZE = 32;
 
 const App = () => {
-    // Initial position of the square
-    const [position, setPosition] = useState({ top: 50, left: 50 });
+  const [position, setPosition] = useState({ top: 50, left: 50 });
 
-    // Function to handle key press
-    const handleKeyDown = (event) => {
-        const { key } = event;
-        setPosition((prevPosition) => {
-            switch (key) {
-                case 'ArrowUp':
-                    return { ...prevPosition, top: prevPosition.top - 10 };
-                case 'ArrowDown':
-                    return { ...prevPosition, top: prevPosition.top + 10 };
-                case 'ArrowLeft':
-                    return { ...prevPosition, left: prevPosition.left - 10 };
-                case 'ArrowRight':
-                    return { ...prevPosition, left: prevPosition.left + 10 };
-                default:
-                    return prevPosition;
-            }
-        });
+  const handleKeyDown = (event) => {
+    const { key } = event;
+    setPosition((prevPosition) => {
+      let newPos = { ...prevPosition };
+      switch (key) {
+        case 'ArrowUp':
+          newPos.top = Math.max(newPos.top - 10, 0);
+          break;
+        case 'ArrowDown':
+          newPos.top = Math.min(newPos.top + 10, window.innerHeight - SQUARE_SIZE);
+          break;
+        case 'ArrowLeft':
+          newPos.left = Math.max(newPos.left - 10, 0);
+          break;
+        case 'ArrowRight':
+          newPos.left = Math.min(newPos.left + 10, window.innerWidth - SQUARE_SIZE);
+          break;
+        default:
+          return prevPosition;
+      }
+      return newPos;
+    });
+  };
+
+  const handleTouchMove = (event) => {
+    const touch = event.touches[0];
+    const newLeft = touch.clientX - SQUARE_SIZE / 2;
+    const newTop = touch.clientY - SQUARE_SIZE / 2;
+
+    setPosition({
+      top: Math.min(Math.max(newTop, 0), window.innerHeight - SQUARE_SIZE),
+      left: Math.min(Math.max(newLeft, 0), window.innerWidth - SQUARE_SIZE),
+    });
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('touchmove', handleTouchMove);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('touchmove', handleTouchMove);
     };
+  }, []);
 
-    // Add event listener for keydown event
-    React.useEffect(() => {
-        window.addEventListener('keydown', handleKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, []);
-
-    return (
-        <div className="container">
-            <div
-                className="square"
-                style={{ top: `${position.top}px`, left: `${position.left}px` }}
-            ></div>
-        </div>
-    );
+  return (
+    <div className="container">
+      <div
+        className="square"
+        style={{ top: `${position.top}px`, left: `${position.left}px` }}
+      ></div>
+    </div>
+  );
 };
 
 export default App;
