@@ -24,19 +24,28 @@ body, html {
     justify-content: center;
 }
 
-.square, .sprite {
+.score {
     position: absolute;
-    transition: transform 0.05s; /* Smooth and fast transition */
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: bold;
+    z-index: 10;
 }
 
 .square {
     width: 32px;
     height: 32px;
     background-color: black;
+    position: absolute;
+    transition: transform 0.05s; /* Smooth and fast transition */
 }
 
 .sprite {
     width: 16px;
     height: 16px;
     background-color: black;
+    position: absolute;
+    transition: transform 0.05s; /* Smooth and fast transition */
 }
