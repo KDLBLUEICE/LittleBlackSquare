@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://KDLBLUEICE.github.io/reactproject1>",
+  "homepage": "https://KDLBLUEICE.github.io/reactproject1/reactproject1>",
+
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
