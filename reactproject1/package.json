@@ -6,7 +6,7 @@
   "homepage": "https://KDLBLUEICE.github.io/reactproject1/reactproject1>",
   "scripts": {
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
+    "deploy": "gh-pages -d dist",
     
     "dev": "vite",
     "build": "vite build",
