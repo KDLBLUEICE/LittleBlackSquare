@@ -33,8 +33,9 @@ const App = () => {
 
     const handleTouchMove = (event) => {
         const touch = event.touches[0];
-        const newLeft = touch.clientX - SQUARE_SIZE / 2;
-        const newTop = touch.clientY - SQUARE_SIZE / 2;
+        const newLeft = Math.min(Math.max(touch.clientX - SQUARE_SIZE / 2, 0), window.innerWidth - SQUARE_SIZE);
+        const newTop = Math.min(Math.max(touch.clientY - SQUARE_SIZE / 2, 0), window.innerHeight - SQUARE_SIZE);
+
         setPosition({
             top: newTop,
             left: newLeft,
@@ -55,7 +56,7 @@ const App = () => {
         <div className="container">
             <div
                 className="square"
-                style={{ transform: `translate(${position.left}px, ${position.top}px)` }}
+                style={{ top: `${position.top}px`, left: `${position.left}px` }}
             ></div>
         </div>
     );
