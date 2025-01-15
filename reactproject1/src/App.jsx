@@ -5,6 +5,7 @@ import './App.css';
 const SQUARE_SIZE = 32;
 const SPRITE_SIZE = SQUARE_SIZE / 2;
 const MOVE_DISTANCE = 100;
+const SPEED = 10; // Speed in pixels per second
 const randomInterval = () => Math.random() * (2000 - 200) + 200;
 
 const App = () => {
@@ -17,6 +18,7 @@ const App = () => {
     const [collisionDetected, setCollisionDetected] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [lastMoveTime, setLastMoveTime] = useState(Date.now());
+    const [targetPosition, setTargetPosition] = useState(spritePosition);
 
     const spriteMoveTimeout = useRef(null);
 
@@ -82,7 +84,7 @@ const App = () => {
         }
 
         const newPosition = validMoves[Math.floor(Math.random() * validMoves.length)];
-        setSpritePosition(newPosition);
+        setTargetPosition(newPosition);
         setLastMoveTime(Date.now());
         startSpriteMoveTimer();
     };
@@ -154,6 +156,25 @@ const App = () => {
         window.addEventListener('mousemove', handleMouseMove); // Add mouse move listener
 
         const animationLoop = () => {
+            const distanceX = targetPosition.left - spritePosition.left;
+            const distanceY = targetPosition.top - spritePosition.top;
+            const distance = Math.hypot(distanceX, distanceY);
+
+            if (distance > 1) {
+                const directionX = distanceX / distance;
+                const directionY = distanceY / distance;
+                const moveDistance = SPEED * (Date.now() - lastMoveTime) / 1000;
+
+                setSpritePosition((prevPos) => {
+                    const newLeft = Math.min(Math.max(prevPos.left + directionX * moveDistance, 0), window.innerWidth - SPRITE_SIZE);
+                    const newTop = Math.min(Math.max(prevPos.top + directionY * moveDistance, 0), window.innerHeight - SPRITE_SIZE);
+
+                    return { left: newLeft, top: newTop };
+                });
+
+                setLastMoveTime(Date.now());
+            }
+
             detectCollision(position, spritePosition, SQUARE_SIZE, SPRITE_SIZE);
             requestAnimationFrame(animationLoop);
         };
@@ -174,7 +195,7 @@ const App = () => {
             window.removeEventListener('mousemove', handleMouseMove); // Clean up mouse move listener
             clearTimeout(spriteMoveTimeout.current);
         };
-    }, [position, spritePosition]);
+    }, [position, spritePosition, targetPosition]);
 
     return (
         <div className="container">
