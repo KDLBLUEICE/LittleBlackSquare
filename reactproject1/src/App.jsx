@@ -4,16 +4,21 @@ import './App.css';
 
 const SQUARE_SIZE = 32;
 const SPRITE_SIZE = SQUARE_SIZE / 2;
-
+const MOVE_DISTANCE = 100;
 const randomInterval = () => Math.random() * (2000 - 200) + 200;
 
 const App = () => {
     const [position, setPosition] = useState({ top: window.innerHeight / 2 - SQUARE_SIZE / 2, left: window.innerWidth / 2 - SQUARE_SIZE / 2 });
-    const [spritePosition, setSpritePosition] = useState({ top: Math.random() * (window.innerHeight - SPRITE_SIZE), left: Math.random() * (window.innerWidth - SPRITE_SIZE) });
+    const [spritePosition, setSpritePosition] = useState({
+        top: Math.random() * (window.innerHeight - SPRITE_SIZE),
+        left: Math.random() * (window.innerWidth - SPRITE_SIZE)
+    });
     const [score, setScore] = useState(0);
     const [collisionDetected, setCollisionDetected] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [lastMoveTime, setLastMoveTime] = useState(Date.now());
 
-    const spriteMoveTimer = useRef(null);
+    const spriteMoveTimeout = useRef(null);
 
     const handleKeyDown = (event) => {
         const { key } = event;
@@ -58,11 +63,28 @@ const App = () => {
     };
 
     const moveSpriteRandomly = () => {
-        setSpritePosition({
-            top: Math.random() * (window.innerHeight - SPRITE_SIZE),
-            left: Math.random() * (window.innerWidth - SPRITE_SIZE),
-        });
-        startSpriteMoveTimer(); // Start the timer again after moving the sprite
+        const possibleMoves = [
+            { top: spritePosition.top - MOVE_DISTANCE, left: spritePosition.left },
+            { top: spritePosition.top + MOVE_DISTANCE, left: spritePosition.left },
+            { top: spritePosition.top, left: spritePosition.left - MOVE_DISTANCE },
+            { top: spritePosition.top, left: spritePosition.left + MOVE_DISTANCE },
+        ];
+
+        const validMoves = possibleMoves.filter(({ top, left }) =>
+            top >= 0 &&
+            top <= Math.max(0, window.innerHeight - SPRITE_SIZE) &&
+            left >= 0 &&
+            left <= Math.max(0, window.innerWidth - SPRITE_SIZE)
+        );
+
+        if (validMoves.length === 0) {
+            return;
+        }
+
+        const newPosition = validMoves[Math.floor(Math.random() * validMoves.length)];
+        setSpritePosition(newPosition);
+        setLastMoveTime(Date.now());
+        startSpriteMoveTimer();
     };
 
     const detectCollision = (pos1, pos2, size1, size2) => {
@@ -95,11 +117,23 @@ const App = () => {
         );
     };
 
+    const TimerDisplay = () => {
+        return (
+            <div className="timer">
+                {`Current Time: ${currentTime.toLocaleTimeString()}`}
+            </div>
+        );
+    };
+
     const startSpriteMoveTimer = () => {
-        clearInterval(spriteMoveTimer.current);
-        spriteMoveTimer.current = setTimeout(() => {
+        clearTimeout(spriteMoveTimeout.current);
+        const interval = randomInterval();
+        const elapsedTime = Date.now() - lastMoveTime;
+        const adjustedInterval = Math.max(interval - elapsedTime, 0);
+
+        spriteMoveTimeout.current = setTimeout(() => {
             moveSpriteRandomly();
-        }, randomInterval());
+        }, adjustedInterval);
     };
 
     useEffect(() => {
@@ -124,15 +158,21 @@ const App = () => {
             requestAnimationFrame(animationLoop);
         };
 
+        const timeUpdateLoop = () => {
+            setCurrentTime(new Date());
+            requestAnimationFrame(timeUpdateLoop);
+        };
+
         startSpriteMoveTimer();
         requestAnimationFrame(animationLoop);
+        requestAnimationFrame(timeUpdateLoop);
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('touchmove', handleTouchMove);
             window.removeEventListener('resize', handleResize);
             window.removeEventListener('mousemove', handleMouseMove); // Clean up mouse move listener
-            clearInterval(spriteMoveTimer.current);
+            clearTimeout(spriteMoveTimeout.current);
         };
     }, [position, spritePosition]);
 
@@ -141,6 +181,7 @@ const App = () => {
             <div className="score">{`Score: ${score}`}</div>
             <CoordinatesDisplay />
             <CollisionMessage />
+            <TimerDisplay />
             <div
                 className="square"
                 style={{ top: `${position.top}px`, left: `${position.left}px` }}
