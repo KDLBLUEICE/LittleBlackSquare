@@ -34,6 +34,16 @@ body, html {
     z-index: 10;
 }
 
+.coordinates {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 10;
+}
+
 .square {
     width: 32px;
     height: 32px;
@@ -49,3 +59,12 @@ body, html {
     position: absolute;
     transition: transform 0.05s; /* Smooth and fast transition */
 }
+
+.collision-message {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 10;
