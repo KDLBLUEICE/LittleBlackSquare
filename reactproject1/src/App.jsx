@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 const SQUARE_SIZE = 32;
@@ -18,7 +18,6 @@ const App = () => {
     const spriteMoveTimeout = useRef(null);
     const [targetPosition, setTargetPosition] = useState(spritePos);
     const [lastMoveTime, setLastMoveTime] = useState(Date.now());
-    const [reverseDirection, setReverseDirection] = useState(false);
 
     const handleMouseMove = (e) => {
         const rect = playerRef.current.getBoundingClientRect();
@@ -45,7 +44,7 @@ const App = () => {
         setPlayerPos({ x, y });
     };
 
-    const checkCollision = useCallback(() => {
+    const checkCollision = () => {
         const stationarySprite = { x: spritePos.left, y: spritePos.top, size: SPRITE_SIZE };
         const player = { x: playerPos.x, y: playerPos.y, size: SQUARE_SIZE };
 
@@ -56,23 +55,10 @@ const App = () => {
             player.y + player.size > stationarySprite.y
         ) {
             setScore(score + 1);
-            setReverseDirection(true);
-
-            // Bounce the sprite off the player
-            const bounceDistance = 10;
-            const newX = spritePos.left - (playerPos.x - spritePos.left);
-            const newY = spritePos.top - (playerPos.y - spritePos.top);
-
-            setSpritePos({
-                left: Math.max(0, Math.min(newX, window.innerWidth - SPRITE_SIZE)),
-                top: Math.max(0, Math.min(newY, window.innerHeight - SPRITE_SIZE))
-            });
-        } else {
-            setReverseDirection(false);
         }
-    }, [playerPos, spritePos, score]);
+    };
 
-    const moveSpriteRandomly = useCallback(() => {
+    const moveSpriteRandomly = () => {
         const possibleMoves = [
             { top: spritePos.top - MOVE_DISTANCE, left: spritePos.left },
             { top: spritePos.top + MOVE_DISTANCE, left: spritePos.left },
@@ -85,13 +71,17 @@ const App = () => {
             left >= 0 && left <= Math.max(0, window.innerWidth - SPRITE_SIZE)
         );
 
+        if (validMoves.length === 0) {
+            return;
+        }
+
         const newPosition = validMoves[Math.floor(Math.random() * validMoves.length)];
         setTargetPosition(newPosition);
         setLastMoveTime(Date.now());
         startSpriteMoveTimer();
-    }, [spritePos]);
+    };
 
-    const startSpriteMoveTimer = useCallback(() => {
+    const startSpriteMoveTimer = () => {
         clearTimeout(spriteMoveTimeout.current);
         const interval = randomInterval();
         const elapsedTime = Date.now() - lastMoveTime;
@@ -100,11 +90,11 @@ const App = () => {
         spriteMoveTimeout.current = setTimeout(() => {
             moveSpriteRandomly();
         }, adjustedInterval);
-    }, [lastMoveTime, moveSpriteRandomly]);
+    };
 
     useEffect(() => {
         checkCollision();
-    }, [playerPos, spritePos, checkCollision]);
+    }, [playerPos, spritePos]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -150,7 +140,7 @@ const App = () => {
             window.removeEventListener('resize', handleResize);
             clearTimeout(spriteMoveTimeout.current);
         };
-    }, [targetPosition, spritePos, startSpriteMoveTimer, lastMoveTime]);
+    }, [targetPosition, spritePos]);
 
     return (
         <div
