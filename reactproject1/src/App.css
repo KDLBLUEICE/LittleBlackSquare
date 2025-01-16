@@ -50,3 +50,22 @@ body, html {
     position: absolute;
     transition: transform 0.05s; /* Smooth and fast transition */
 }
+
+.explosion {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background-color: black;
+    animation: explode 1s forwards;
+}
+
+@keyframes explode {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(0, 0);
+    }
+}
