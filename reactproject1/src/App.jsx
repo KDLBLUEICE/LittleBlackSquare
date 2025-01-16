@@ -15,12 +15,14 @@ const App = () => {
     });
     const [score, setScore] = useState(0);
     const [explosions, setExplosions] = useState([]);
+    const [showTitleScreen, setShowTitleScreen] = useState(true);
     const playerRef = useRef(null);
     const spriteMoveTimeout = useRef(null);
     const [targetPosition, setTargetPosition] = useState(spritePos);
     const [lastMoveTime, setLastMoveTime] = useState(Date.now());
 
     const handleMouseMove = (e) => {
+        if (showTitleScreen) return;
         const rect = playerRef.current.getBoundingClientRect();
         let x = e.clientX - rect.left - 16;
         let y = e.clientY - rect.top - 16;
@@ -33,6 +35,7 @@ const App = () => {
     };
 
     const handleTouchMove = (e) => {
+        if (showTitleScreen) return;
         const rect = playerRef.current.getBoundingClientRect();
         const touch = e.touches[0];
         let x = touch.clientX - rect.left - 16;
@@ -70,7 +73,6 @@ const App = () => {
                 return newScore;
             });
 
-            // Move sprite in the opposite direction (bounce logic is removed as we're not using it)
             const newX = spritePos.left - (playerPos.x - spritePos.left);
             const newY = spritePos.top - (playerPos.y - spritePos.top);
 
@@ -170,28 +172,40 @@ const App = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const handleStartClick = () => {
+        setShowTitleScreen(false);
+    };
+
     return (
         <div
             className="container"
             onMouseMove={handleMouseMove}
             onTouchMove={handleTouchMove}
+            onClick={handleStartClick}
             ref={playerRef}
         >
-            <div className="sprite" style={{ left: spritePos.left, top: spritePos.top }} />
-            <div className="player" style={{ left: playerPos.x, top: playerPos.y }} />
-            <div className="score">Score: {score}</div>
-            {explosions.map(explosion => (
-                <div
-                    key={explosion.id}
-                    className="explosion"
-                    style={{
-                        left: explosion.x,
-                        top: explosion.y,
-                        animationDelay: `${(explosion.id % 16) * 0.05}s`,
-                        transform: `translate(${16 * Math.cos(explosion.angle)}px, ${16 * Math.sin(explosion.angle)}px)`
-                    }}
-                />
-            ))}
+            <div className={`popup ${showTitleScreen ? 'show' : ''}`}>
+                <h1>Little Black Square</h1>
+                <p>by KDLBLUEICE</p>
+                <p>Click anywhere to start</p>
+            </div>
+            <div className={`game-content ${showTitleScreen ? 'hidden' : 'show'}`}>
+                <div className="sprite" style={{ left: spritePos.left, top: spritePos.top }} />
+                <div className="player" style={{ left: playerPos.x, top: playerPos.y }} />
+                <div className="score">Score: {score}</div>
+                {explosions.map(explosion => (
+                    <div
+                        key={explosion.id}
+                        className="explosion"
+                        style={{
+                            left: explosion.x,
+                            top: explosion.y,
+                            animationDelay: `${(explosion.id % 16) * 0.05}s`,
+                            transform: `translate(${16 * Math.cos(explosion.angle)}px, ${16 * Math.sin(explosion.angle)}px)`
+                        }}
+                    />
+                ))}
+            </div>
         </div>
     );
 };
