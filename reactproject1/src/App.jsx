@@ -3,8 +3,9 @@ import './App.css';
 
 const SQUARE_SIZE = 32;
 const SPRITE_SIZE = 16;
-const MOVE_DISTANCE = 100;
+const MOVE_DISTANCE = 10; // Reduce the move distance for smoother movement
 const SPEED = 10; // Speed in pixels per second
+const ORBIT_SPEED = 2 * Math.PI; // Orbit speed in radians per second (20 RPM)
 const randomInterval = () => Math.random() * (2000 - 200) + 200;
 
 const App = () => {
@@ -16,6 +17,8 @@ const App = () => {
     const [score, setScore] = useState(0);
     const [explosions, setExplosions] = useState([]);
     const [showTitleScreen, setShowTitleScreen] = useState(true);
+    const [isOrbiting, setIsOrbiting] = useState(false);
+    const [angle, setAngle] = useState(0);
     const playerRef = useRef(null);
     const spriteMoveTimeout = useRef(null);
     const [targetPosition, setTargetPosition] = useState(spritePos);
@@ -70,18 +73,29 @@ const App = () => {
                 }
                 setExplosions(prevExplosions => [...prevExplosions, ...explosionParticles]);
 
+                // Set sprite to orbit at 100 score
+                if (newScore >= 100) {
+                    setIsOrbiting(true);
+                }
+
                 return newScore;
             });
 
-            const newX = spritePos.left - (playerPos.x - spritePos.left);
-            const newY = spritePos.top - (playerPos.y - spritePos.top);
+            if (!isOrbiting) {
+                // Smoothly move the sprite away from the player
+                const deltaX = playerPos.x - spritePos.left;
+                const deltaY = playerPos.y - spritePos.top;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const moveX = (deltaX / distance) * MOVE_DISTANCE;
+                const moveY = (deltaY / distance) * MOVE_DISTANCE;
 
-            setSpritePos({
-                left: Math.max(0, Math.min(newX, window.innerWidth - SPRITE_SIZE)),
-                top: Math.max(0, Math.min(newY, window.innerHeight - SPRITE_SIZE))
-            });
+                setSpritePos((prevPos) => ({
+                    left: Math.max(0, Math.min(prevPos.left - moveX, window.innerWidth - SPRITE_SIZE)),
+                    top: Math.max(0, Math.min(prevPos.top - moveY, window.innerHeight - SPRITE_SIZE))
+                }));
+            }
         }
-    }, [playerPos, spritePos]);
+    }, [playerPos, spritePos, isOrbiting]);
 
     const moveSpriteRandomly = useCallback(() => {
         const possibleMoves = [
@@ -132,23 +146,36 @@ const App = () => {
         window.addEventListener('resize', handleResize);
 
         const animationLoop = () => {
-            const distanceX = targetPosition.left - spritePos.left;
-            const distanceY = targetPosition.top - spritePos.top;
-            const distance = Math.hypot(distanceX, distanceY);
+            if (isOrbiting) {
+                const radius = 50; // Orbit radius in pixels
+                const elapsedTime = (Date.now() - lastMoveTime) / 1000; // Elapsed time in seconds
+                const newAngle = angle + ORBIT_SPEED * elapsedTime;
 
-            if (distance > 1) {
-                const directionX = distanceX / distance;
-                const directionY = distanceY / distance;
-                const moveDistance = SPEED * (Date.now() - lastMoveTime) / 1000;
+                const newLeft = playerPos.x + radius * Math.cos(newAngle) - SPRITE_SIZE / 2;
+                const newTop = playerPos.y + radius * Math.sin(newAngle) - SPRITE_SIZE / 2;
 
-                setSpritePos((prevPos) => {
-                    const newLeft = Math.min(Math.max(prevPos.left + directionX * moveDistance, 0), window.innerWidth - SPRITE_SIZE);
-                    const newTop = Math.min(Math.max(prevPos.top + directionY * moveDistance, 0), window.innerHeight - SPRITE_SIZE);
-
-                    return { left: newLeft, top: newTop };
-                });
-
+                setSpritePos({ left: newLeft, top: newTop });
+                setAngle(newAngle);
                 setLastMoveTime(Date.now());
+            } else {
+                const distanceX = targetPosition.left - spritePos.left;
+                const distanceY = targetPosition.top - spritePos.top;
+                const distance = Math.hypot(distanceX, distanceY);
+
+                if (distance > 1) {
+                    const directionX = distanceX / distance;
+                    const directionY = distanceY / distance;
+                    const moveDistance = SPEED * (Date.now() - lastMoveTime) / 1000;
+
+                    setSpritePos((prevPos) => {
+                        const newLeft = Math.min(Math.max(prevPos.left + directionX * moveDistance, 0), window.innerWidth - SPRITE_SIZE);
+                        const newTop = Math.min(Math.max(prevPos.top + directionY * moveDistance, 0), window.innerHeight - SPRITE_SIZE);
+
+                        return { left: newLeft, top: newTop };
+                    });
+
+                    setLastMoveTime(Date.now());
+                }
             }
 
             requestAnimationFrame(animationLoop);
@@ -161,7 +188,7 @@ const App = () => {
             window.removeEventListener('resize', handleResize);
             clearTimeout(spriteMoveTimeout.current);
         };
-    }, [targetPosition, spritePos, startSpriteMoveTimer, lastMoveTime]);
+    }, [targetPosition, spritePos, startSpriteMoveTimer, lastMoveTime, playerPos, isOrbiting, angle]);
 
     // Remove old explosions
     useEffect(() => {
@@ -208,6 +235,5 @@ const App = () => {
             </div>
         </div>
     );
-};
-
+}
 export default App;
